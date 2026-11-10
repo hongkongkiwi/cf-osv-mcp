@@ -1,0 +1,13 @@
+name = "osv-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = true
+
+# No account id or secrets in this file. Set CLOUDFLARE_ACCOUNT_ID in the
+# environment for deploys, and `wrangler secret put MCP_AUTH_TOKEN` for auth.

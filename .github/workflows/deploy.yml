@@ -1,0 +1,55 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the main branch
+        env:
+          DEPLOY_REF: ${{ github.ref }}
+        run: |
+          if [[ "$DEPLOY_REF" != "refs/heads/main" ]]; then
+            echo "Deploys only run from main (got $DEPLOY_REF)."
+            exit 1
+          fi
+
+  deploy:
+    needs: guard
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.24.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - name: Deploy Worker
+        run: env -u HTTP_PROXY -u HTTPS_PROXY pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Smoke test rejects anonymous requests
+        if: vars.WORKER_URL != ''
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' \
+            -X POST "${{ vars.WORKER_URL }}/mcp" \
+            -H 'content-type: application/json' \
+            -d '{}')
+          test "$status" = "401"

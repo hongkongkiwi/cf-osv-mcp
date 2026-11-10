@@ -1,0 +1,9 @@
+cf-osv-mcp (Cloudflare Workers port)
+Copyright 2026 Andy Savage
+
+This product includes software derived from StacklokLabs/osv-mcp
+(https://github.com/StacklokLabs/osv-mcp), licensed under the Apache License,
+Version 2.0. The unmodified Go reference implementation is kept under
+`upstream/` at commit 498b22e478b0d6418972bdd09dbbc8098ddf041c
+(2026-10-14). The Worker implementation under `src/` is a TypeScript port of
+that behaviour.
