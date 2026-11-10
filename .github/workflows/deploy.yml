@@ -1,6 +1,8 @@
 name: Deploy
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -12,24 +14,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  guard:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require the main branch
-        env:
-          DEPLOY_REF: ${{ github.ref }}
-        run: |
-          if [[ "$DEPLOY_REF" != "refs/heads/main" ]]; then
-            echo "Deploys only run from main (got $DEPLOY_REF)."
-            exit 1
-          fi
-
   deploy:
-    needs: guard
+    # Opt-in per repository, so the public template never deploys on push.
+    if: vars.AUTO_DEPLOY == 'true' || github.event_name == 'workflow_dispatch'
     environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Require the main branch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DEPLOY_REF: ${{ github.ref }}
+        run: |
+          if [[ "$DEPLOY_REF" != "refs/heads/main" ]]; then
+            echo "Manual deploys only run from main (got $DEPLOY_REF)."
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v6
         with:

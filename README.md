@@ -68,10 +68,23 @@ pnpm deploy
 pnpm exec wrangler secret put MCP_AUTH_TOKEN
 ```
 
-The `Deploy` workflow runs manually, from `main` only, and needs the repository
-secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Set the repository
-variable `WORKER_URL` (for example `https://osv-mcp.example.workers.dev`) to
-enable its anonymous-request smoke test.
+The `Deploy` workflow is manual by default and only runs from `main`. To deploy
+automatically on every push to `main`, set the repository variable
+`AUTO_DEPLOY` to `true` and add the repository secrets `CLOUDFLARE_API_TOKEN`
+and `CLOUDFLARE_ACCOUNT_ID`. Set `WORKER_URL` (for example
+`https://osv-mcp.example.workers.dev`) to enable the anonymous-request smoke
+test. The job skips cleanly while `AUTO_DEPLOY` is unset, so the public template
+never deploys itself.
+
+As an alternative to GitHub Actions minutes, Cloudflare Workers Builds can build
+and deploy on push from Cloudflare's own infrastructure (6,000 build minutes per
+month on Workers Paid, 3,000 on Free, then $0.005 per minute). Connect the
+Worker to the repository under **Settings** > **Builds** in the Cloudflare
+dashboard, set the build command to `pnpm install --frozen-lockfile && pnpm run
+check` and the deploy command to `pnpm exec wrangler deploy`. Workers Builds
+authenticates with its own build token, so no `CLOUDFLARE_API_TOKEN` secret is
+needed there.
+
 
 ## Provenance
 
